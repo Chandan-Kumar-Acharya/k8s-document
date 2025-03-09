@@ -1,0 +1,241 @@
+
+Kubernetes troubleshooting involves diagnosing issues with Pods, Nodes, Services, and other resources in your cluster. Below is a list of common **Kubernetes troubleshooting commands** and their use cases:
+
+### **1. General Cluster Health Checks**
+- **Check cluster health**:
+  ```bash
+  kubectl cluster-info
+  ```
+
+- **View cluster nodes** (check if nodes are ready):
+  ```bash
+  kubectl get nodes
+  ```
+
+- **Check for cluster status and version**:
+  ```bash
+  kubectl version
+  ```
+
+- **Check the current context in kubeconfig**:
+  ```bash
+  kubectl config current-context
+  ```
+
+### **2. Pod Troubleshooting**
+- **List all Pods in all namespaces**:
+  ```bash
+  kubectl get pods --all-namespaces
+  ```
+
+- **List all Pods in a specific namespace**:
+  ```bash
+  kubectl get pods -n <namespace>
+  ```
+
+- **Describe a specific Pod** (to get detailed information about the Pod):
+  ```bash
+  kubectl describe pod <pod-name> -n <namespace>
+  ```
+
+- **View logs of a specific Pod**:
+  ```bash
+  kubectl logs <pod-name> -n <namespace>
+  ```
+
+- **View logs of a specific container in a Pod**:
+  ```bash
+  kubectl logs <pod-name> -n <namespace> -c <container-name>
+  ```
+
+- **View logs for previous containers (in case of container restart)**:
+  ```bash
+  kubectl logs <pod-name> -n <namespace> -c <container-name> --previous
+  ```
+
+- **Check for resource usage (CPU/Memory) of Pods**:
+  ```bash
+  kubectl top pod <pod-name> -n <namespace>
+  ```
+
+- **Exec into a Pod (to troubleshoot directly)**:
+  ```bash
+  kubectl exec -it <pod-name> -n <namespace> -- /bin/bash
+  ```
+
+### **3. Deployment and ReplicaSet Troubleshooting**
+- **Get information about Deployments**:
+  ```bash
+  kubectl get deployments -n <namespace>
+  ```
+
+- **Describe a Deployment**:
+  ```bash
+  kubectl describe deployment <deployment-name> -n <namespace>
+  ```
+
+- **Check Deployment's Pod status**:
+  ```bash
+  kubectl get pods -l app=<deployment-name> -n <namespace>
+  ```
+
+- **Get the status of a ReplicaSet**:
+  ```bash
+  kubectl get replicasets -n <namespace>
+  ```
+
+### **4. Node Troubleshooting**
+- **List all nodes and their status**:
+  ```bash
+  kubectl get nodes
+  ```
+
+- **Get detailed information about a specific node**:
+  ```bash
+  kubectl describe node <node-name>
+  ```
+
+- **Check resources available on each node**:
+  ```bash
+  kubectl top node
+  ```
+
+- **Check the Kubelet logs on a node** (useful for node-level issues):
+  ```bash
+  journalctl -u kubelet
+  ```
+
+### **5. Service and Networking Troubleshooting**
+- **List all services in the cluster**:
+  ```bash
+  kubectl get svc --all-namespaces
+  ```
+
+- **Describe a specific service**:
+  ```bash
+  kubectl describe svc <service-name> -n <namespace>
+  ```
+
+- **Check service endpoints** (to see if they are properly linked to Pods):
+  ```bash
+  kubectl get endpoints -n <namespace>
+  ```
+
+- **Check network policies in the cluster**:
+  ```bash
+  kubectl get networkpolicies -n <namespace>
+  ```
+
+- **Check for issues with Ingress**:
+  ```bash
+  kubectl describe ingress <ingress-name> -n <namespace>
+  ```
+
+- **Check if services are reachable from within the cluster**:
+  ```bash
+  kubectl run -i --tty --rm debug --image=busybox --serviceaccount=default --restart=Never --namespace=<namespace> -- /bin/sh
+  ```
+
+### **6. Storage Troubleshooting**
+- **Get Persistent Volumes (PVs)**:
+  ```bash
+  kubectl get pv
+  ```
+
+- **Get Persistent Volume Claims (PVCs)**:
+  ```bash
+  kubectl get pvc -n <namespace>
+  ```
+
+- **Describe a PVC**:
+  ```bash
+  kubectl describe pvc <pvc-name> -n <namespace>
+  ```
+
+- **Check the status of StatefulSets (related to persistent storage)**:
+  ```bash
+  kubectl get statefulsets -n <namespace>
+  ```
+
+### **7. RBAC (Role-Based Access Control) Troubleshooting**
+- **Get roles in a namespace**:
+  ```bash
+  kubectl get roles -n <namespace>
+  ```
+
+- **Get role bindings**:
+  ```bash
+  kubectl get rolebindings -n <namespace>
+  ```
+
+- **Get ClusterRoles and ClusterRoleBindings** (for cluster-wide access issues):
+  ```bash
+  kubectl get clusterroles
+  kubectl get clusterrolebindings
+  ```
+
+- **Check the effective RBAC permissions for a user or service account**:
+  ```bash
+  kubectl auth can-i <verb> <resource> --as <user>
+  ```
+
+### **8. Event Troubleshooting**
+- **View recent events in the cluster** (to see warnings/errors about resource failures):
+  ```bash
+  kubectl get events --sort-by='.metadata.creationTimestamp'
+  ```
+
+- **Get events for a specific namespace**:
+  ```bash
+  kubectl get events -n <namespace>
+  ```
+
+- **Describe events in a specific Pod**:
+  ```bash
+  kubectl describe pod <pod-name> -n <namespace>
+  ```
+
+### **9. Debugging Resource Configurations**
+- **Check the YAML definition of any resource**:
+  ```bash
+  kubectl get <resource-type> <resource-name> -n <namespace> -o yaml
+  ```
+
+- **Validate the YAML file before applying** (check for syntax errors):
+  ```bash
+  kubectl apply -f <file>.yaml --dry-run=client
+  ```
+
+### **10. Debugging with `kubectl` Plugins**
+- **Use kubectl debug** for interactive troubleshooting (useful for debugging Pods and Nodes):
+  ```bash
+  kubectl debug -it <pod-name> --image=busybox
+  ```
+
+- **Run a debug container with a specific image**:
+  ```bash
+  kubectl run -i --tty --rm debug --image=busybox --restart=Never --namespace=<namespace> -- /bin/sh
+  ```
+
+---
+
+### **11. Miscellaneous Commands**
+- **Check for dangling resources** (unused resources that can be cleaned up):
+  ```bash
+  kubectl get all --all-namespaces
+  ```
+
+- **Force delete a Pod that is stuck**:
+  ```bash
+  kubectl delete pod <pod-name> -n <namespace> --grace-period=0 --force
+  ```
+
+- **List all the deployments and their current state**:
+  ```bash
+  kubectl get deployments -n <namespace>
+  ```
+
+---
+
+### Conclusion:
+These are the most commonly used **Kubernetes troubleshooting commands** to help diagnose issues within your cluster. They allow you to get detailed information about Pods, Services, Nodes, and other resources, as well as logs, events, and more. By using these commands, you can identify and resolve issues such as resource constraints, Pod failures, misconfigured services, or network problems.

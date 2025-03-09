@@ -239,3 +239,167 @@ Kubernetes troubleshooting involves diagnosing issues with Pods, Nodes, Services
 
 ### Conclusion:
 These are the most commonly used **Kubernetes troubleshooting commands** to help diagnose issues within your cluster. They allow you to get detailed information about Pods, Services, Nodes, and other resources, as well as logs, events, and more. By using these commands, you can identify and resolve issues such as resource constraints, Pod failures, misconfigured services, or network problems.
+
+=================================================================================================================================================
+
+### **Kubernetes `describe` and `info` Commands with Examples**
+
+Kubernetes provides a set of commands that allow administrators and developers to interact with and manage the cluster. Two important commands for gathering information about resources in your cluster are `kubectl describe` and `kubectl info`. Let's take a look at both.
+
+---
+
+### **1. `kubectl describe` Command**
+
+The `kubectl describe` command provides detailed information about Kubernetes resources. It’s useful for troubleshooting and understanding the current state of resources in your cluster, such as Pods, Nodes, Deployments, ReplicaSets, Services, and more.
+
+#### **General Syntax:**
+```bash
+kubectl describe <resource-type> <resource-name> [flags]
+```
+- `<resource-type>` is the type of Kubernetes resource (e.g., pod, node, service, deployment).
+- `<resource-name>` is the name of the specific resource (e.g., `nginx-pod`, `my-deployment`).
+  
+#### **Key Features of `kubectl describe`:**
+- Shows detailed configuration information.
+- Displays events related to the resource (e.g., Pod restarts, Deployment updates).
+- Shows associated labels, annotations, status, and containers.
+
+#### **Examples:**
+
+1. **Describe a Pod:**
+   To view detailed information about a Pod named `nginx-pod`, use:
+   ```bash
+   kubectl describe pod nginx-pod
+   ```
+   **Output:**
+   This will display information about the Pod `nginx-pod`, including:
+   - The containers inside the Pod
+   - Container states (running, waiting, terminated)
+   - Mounted volumes
+   - Pod events (e.g., errors, restarts)
+
+2. **Describe a Deployment:**
+   To view detailed information about a Deployment named `my-deployment`, use:
+   ```bash
+   kubectl describe deployment my-deployment
+   ```
+   **Output:**
+   This shows:
+   - The number of replicas
+   - Available Pods
+   - Labels and selectors
+   - The rollout status
+   - Events related to the deployment, such as scaling or rollout errors
+
+3. **Describe a Service:**
+   To get information about a Service called `my-service`, use:
+   ```bash
+   kubectl describe service my-service
+   ```
+   **Output:**
+   This will provide:
+   - Service type (ClusterIP, NodePort, LoadBalancer)
+   - Endpoints that the service is exposing
+   - Port mappings (which ports the service is exposed on)
+
+4. **Describe a Node:**
+   To view information about a Node in the cluster (e.g., `node1`), use:
+   ```bash
+   kubectl describe node node1
+   ```
+   **Output:**
+   This provides detailed information about the node:
+   - CPU and memory utilization
+   - Disk and network stats
+   - Allocated resources for Pods
+   - Labels and annotations on the node
+
+---
+
+### **2. `kubectl info` Command**
+
+`kubectl info` is not a native command in Kubernetes by default. However, this could refer to retrieving information about the cluster or node resources using commands like `kubectl cluster-info` or `kubectl get`.
+
+### **`kubectl cluster-info`**
+
+This command displays information about the Kubernetes cluster, including the URL of the API server and other important cluster components like the DNS server or kube-dashboard.
+
+#### **General Syntax:**
+```bash
+kubectl cluster-info
+```
+
+#### **Example:**
+
+1. **View Cluster Information:**
+   To get the information about your cluster, use:
+   ```bash
+   kubectl cluster-info
+   ```
+   **Output:**
+   This command returns URLs for the Kubernetes master components, typically the API server and DNS:
+   ```bash
+   Kubernetes master is running at https://<master-ip>:6443
+   KubeDNS is running at https://<dns-ip>:53
+   ```
+
+### **`kubectl get` for Resource Info**
+
+While `kubectl info` isn't a specific command, `kubectl get` is frequently used to get concise info about cluster resources, including Pods, Deployments, Nodes, and more.
+
+#### **Examples:**
+
+1. **Get Cluster Nodes:**
+   ```bash
+   kubectl get nodes
+   ```
+   **Output:**
+   Lists all the nodes in the cluster, including their status, roles, age, and version:
+   ```bash
+   NAME       STATUS   ROLES    AGE     VERSION
+   node1      Ready    master   10d     v1.21.1
+   node2      Ready    <none>   10d     v1.21.1
+   ```
+
+2. **Get Pod Info:**
+   ```bash
+   kubectl get pods
+   ```
+   **Output:**
+   Lists all Pods in the default namespace:
+   ```bash
+   NAME              READY   STATUS    RESTARTS   AGE
+   nginx-pod         1/1     Running   0          5m
+   redis-pod         1/1     Running   0          10m
+   ```
+
+3. **Get Deployment Info:**
+   ```bash
+   kubectl get deployments
+   ```
+   **Output:**
+   Lists all deployments in the default namespace:
+   ```bash
+   NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+   my-deployment   3/3     3            3           10m
+   ```
+
+---
+
+### **Key Differences Between `describe` and `get`**
+
+- **`kubectl describe`** gives a detailed, verbose view of a resource, including its configuration, status, and related events.
+- **`kubectl get`** provides a high-level overview of resources in a concise tabular format.
+
+For example, `kubectl get pods` shows the basic status of Pods, while `kubectl describe pod <pod-name>` will give you much more detail, including events and configuration details like mounted volumes and environment variables.
+
+---
+
+### **Conclusion**
+
+- **`kubectl describe`** is a powerful tool for investigating and troubleshooting specific resources in your Kubernetes cluster. It provides detailed, resource-specific information and helps identify issues with pods, deployments, services, and nodes.
+- **`kubectl cluster-info`** (used with `kubectl get` and other commands) is useful for gathering cluster-level information, such as the state of the Kubernetes master and other critical components.
+
+Understanding and using these commands will help you manage and troubleshoot your Kubernetes environment more effectively.
+
+

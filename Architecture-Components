@@ -1,0 +1,32 @@
+1. Master Node Components (Control Plane)
+The master node is the brain of the Kubernetes cluster. It manages the cluster's state and makes global decisions (e.g., scheduling, monitoring).
+
+API Server (kube-apiserver):
+
+The API server is the entry point for all REST commands used to control the cluster. It validates and processes the REST requests, and then updates the corresponding objects in the etcd (the key-value store).
+Scheduler (kube-scheduler):
+
+The scheduler watches for newly created Pods that have no Node assigned and selects a Node for them to run on. It considers resources, policies, and constraints to make this decision.
+Controller Manager (kube-controller-manager):
+
+The controller manager runs controllers that handle the routine tasks in the cluster, like replication, deployment, and lifecycle management of pods.
+etcd:
+
+A distributed key-value store that holds all of the cluster's state and configuration data. It is highly available and consistent.
+Cloud Controller Manager (Optional):
+
+Manages cloud-specific controllers, such as managing storage or virtual machine lifecycles. It interacts with the cloud provider's API to make adjustments as necessary.
+2. Node Components
+Nodes are the machines (physical or virtual) that run the application workloads in the form of containers.
+
+Kubelet:
+
+The agent that runs on each node in the cluster. It makes sure that containers are running in a Pod. It communicates with the API server to get instructions and updates the node's status.
+Kube Proxy:
+
+A network proxy that runs on each node in the cluster. It manages network communication between Pods and services, ensuring that requests are properly routed within the cluster.
+Container Runtime:
+
+The software responsible for running containers. The most commonly used runtimes are Docker, containerd, and CRI-O. Kubernetes uses container runtimes to launch containers in Pods.
+
+

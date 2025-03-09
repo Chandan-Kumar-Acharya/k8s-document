@@ -1,0 +1,142 @@
+
+The **Kubernetes Pod Lifecycle** defines the various states that a Pod goes through from creation to termination. Understanding the lifecycle of a Pod helps in troubleshooting, designing resilient applications, and setting up health checks.
+
+Here’s a breakdown of the **Pod lifecycle**:
+
+### **Pod Lifecycle Phases:**
+
+1. **Pending**:
+   - This is the initial state when the Pod has been created but is not yet running.
+   - The Pod can be in this state due to the following reasons:
+     - The container image is being pulled.
+     - Resources like CPU and memory are being allocated.
+     - The Pod is waiting for a suitable Node to be scheduled.
+
+   **Key events in this phase:**
+   - The Pod is scheduled by the **Kubernetes Scheduler** to a Node.
+   - The required container image(s) are pulled from a container registry if they’re not present on the Node.
+
+2. **Running**:
+   - Once the Pod is scheduled to a Node, and the container images are available, the Pod moves to the **Running** state.
+   - This means the containers in the Pod are actively running.
+   - In this state, one or more containers in the Pod may be running, waiting, or terminated (due to a failed startup).
+
+   **Key events in this phase:**
+   - The Pod's containers start running.
+   - Health checks (readiness/liveness probes) can be executed.
+
+3. **Succeeded**:
+   - A Pod enters the **Succeeded** state when all of its containers have completed successfully (for example, in the case of a **Job** or **CronJob**).
+   - This state means that the containers finished without any error, and the Pod has successfully completed its task.
+
+   **Key events in this phase:**
+   - The containers exit successfully (with a `0` exit code).
+   - If the Pod is part of a **Job** or **CronJob**, it indicates the completion of the batch task.
+
+4. **Failed**:
+   - A Pod enters the **Failed** state if one or more containers in the Pod terminated with a non-zero exit code.
+   - The Pod will remain in this state until it is deleted or recreated.
+
+   **Key events in this phase:**
+   - Containers inside the Pod encounter an error during execution, and the container exits with a non-zero exit code.
+
+5. **Unknown**:
+   - This state is typically seen if the kubelet (on the Node) is unreachable.
+   - The Kubernetes control plane cannot determine the state of the Pod due to network or other issues.
+
+---
+
+### **Pod Containers Lifecycle:**
+
+Each container within a Pod also has its lifecycle, which is as follows:
+
+1. **Container Creation**:
+   - Kubernetes will create the container when the Pod starts, and it will pull the necessary image from a registry if it is not present.
+
+2. **Container Running**:
+   - Once the container is created, it enters the **running** state where it is actively running its application.
+
+3. **Container Termination**:
+   - The container can be terminated if it completes its task, encounters an error, or is manually terminated.
+   - Upon termination, the container can exit with a **0** exit code (successful) or a **non-zero** exit code (failure).
+
+4. **Container Restart**:
+   - If a container in a Pod fails or is terminated, the **Kubelet** (on the node) will try to restart the container, based on the Pod’s **restartPolicy** (which can be `Always`, `OnFailure`, or `Never`).
+
+---
+
+### **Pod Termination:**
+   - When a Pod is deleted, it moves to the **Terminating** state.
+   - During termination:
+     - The containers in the Pod are gracefully terminated (based on the **terminationGracePeriodSeconds** defined).
+     - The **PreStop** hook can be triggered before the container shuts down.
+     - The container will be stopped, and any resources used by the Pod (such as volumes or network connections) are released.
+     - Once the Pod's containers are stopped, the Pod itself is removed from the cluster.
+
+---
+
+### **Pod Restart Policy:**
+
+A Pod's restart policy is defined under the `spec.restartPolicy` field. The options are:
+
+1. **Always**:
+   - Kubernetes will always restart the containers in the Pod if they exit (whether with success or failure). This is the default setting for **Deployments** and **ReplicaSets**.
+
+2. **OnFailure**:
+   - Kubernetes will restart the container only if it exits with a non-zero exit code (indicating failure).
+
+3. **Never**:
+   - Kubernetes will never restart the container once it exits, regardless of whether the container fails or succeeds. This is usually used for Pods that are intended to run once and then terminate.
+
+---
+
+### **Pod Lifecycle Events:**
+
+1. **PostStart**:
+   - The **PostStart** hook is executed immediately after a container is created but before it starts running. This can be used to perform custom initialization tasks or checks before the container begins processing.
+
+2. **PreStop**:
+   - The **PreStop** hook is executed before a container is terminated. This gives you the chance to perform tasks like graceful shutdowns or cleanup before the container stops.
+
+---
+
+### **Pod Lifecycle Summary:**
+
+| **Lifecycle Phase** | **Description**                                          |
+|---------------------|----------------------------------------------------------|
+| **Pending**          | Pod is being created and scheduled but not yet running.  |
+| **Running**          | Containers are running in the Pod.                       |
+| **Succeeded**        | All containers completed successfully (Pod finished its task). |
+| **Failed**           | At least one container failed (exited with a non-zero exit code). |
+| **Unknown**          | Unable to determine the Pod's state due to communication issues with the Node. |
+
+---
+
+### **Example Pod YAML (with Lifecycle Hooks):**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: example-pod
+spec:
+  restartPolicy: Always
+  containers:
+    - name: example-container
+      image: nginx:latest
+      lifecycle:
+        postStart:
+          exec:
+            command: ["echo", "Hello, World!"]  # Executes immediately after container creation
+        preStop:
+          exec:
+            command: ["echo", "Goodbye!"]  # Executes before container termination
+```
+
+In this example:
+- The `postStart` hook runs the `echo` command when the container starts.
+- The `preStop` hook runs the `echo` command before the container is terminated.
+
+---
+
+### **Conclusion:**
+The **Kubernetes Pod lifecycle** provides several states (Pending, Running, Succeeded, Failed, Unknown) that help define the Pod's progression. Understanding these states and the corresponding container behavior, including hooks and restart policies, will help you design more robust and resilient Kubernetes applications.

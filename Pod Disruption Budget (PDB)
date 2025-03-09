@@ -1,0 +1,177 @@
+
+
+
+### **Kubernetes Pod Disruption Budget (PDB)**
+
+A **Pod Disruption Budget (PDB)** in Kubernetes is a way to ensure that a certain number or percentage of Pods in a deployment or stateful set are **always available**, even when voluntary disruptions (such as rolling updates or node maintenance) occur. A PDB allows you to set the minimum availability or "max disruption" for a set of Pods so that Kubernetes will respect these limits during disruptions like:
+
+- **Rolling updates**: When upgrading deployments, some Pods will be terminated and recreated.
+- **Node maintenance**: When nodes are drained for maintenance, Pods are evicted from the nodes.
+- **Pod deletion or eviction**: When Pods are evicted due to resource pressure or for any other voluntary reason.
+
+Without a PDB, Kubernetes might end up terminating too many Pods during disruptions, potentially affecting the availability of your application.
+
+---
+
+### **Key Concepts of PDB**
+
+A **Pod Disruption Budget** is defined by the following parameters:
+- **Min Available**: Specifies the minimum number of Pods that must be available after a voluntary disruption. Kubernetes will try to maintain this number of Pods during disruptions.
+- **Max Unavailable**: Specifies the maximum number of Pods that can be unavailable during a disruption (either in absolute terms or as a percentage).
+
+### **How PDB Works**
+- Kubernetes ensures that voluntary disruptions (like a rolling update or node drain) do not result in too many Pods being unavailable.
+- If you set a `maxUnavailable` of 1, Kubernetes will not allow more than one Pod to be unavailable during disruptions.
+- If you set a `minAvailable` of 2, Kubernetes will ensure that at least 2 Pods are available at all times.
+
+### **Use Cases for PDB**
+- **High availability**: Ensure that a specific number of replicas of a service are always running.
+- **Rolling updates**: Prevent too many Pods from being taken down simultaneously during updates.
+- **Cluster maintenance**: Ensure that critical applications maintain availability during node maintenance or draining operations.
+
+---
+
+### **Pod Disruption Budget Examples**
+
+#### **1. PDB for a Deployment (Min Available)**
+
+Suppose you have a deployment with 5 Pods, and you want to ensure that at least 3 Pods are always available, even during a disruption like a rolling update or node maintenance.
+
+Here’s how you can define a PDB for this scenario using `minAvailable`.
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: my-pdb
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: my-app
+```
+
+- **minAvailable: 3**: This means at least 3 Pods must be available during any voluntary disruption.
+- **selector.matchLabels**: The PDB applies to Pods with the label `app=my-app`. It ensures that these Pods are managed by the PDB.
+
+You can apply the above PDB with this command:
+
+```bash
+kubectl apply -f pdb-example.yaml
+```
+
+#### **2. PDB for a Deployment (Max Unavailable)**
+
+Alternatively, you can use `maxUnavailable` to specify the maximum number of Pods that can be unavailable during a disruption.
+
+For example, if you have 5 Pods, and you want to allow at most 1 Pod to be unavailable during a disruption:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: my-pdb
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: my-app
+```
+
+- **maxUnavailable: 1**: This means that only 1 Pod can be unavailable at any given time due to voluntary disruptions.
+- **selector.matchLabels**: The PDB applies to Pods with the label `app=my-app`.
+
+#### **3. PDB with Percentage (Max Unavailable)**
+
+You can also set the value of `maxUnavailable` as a percentage. For example, if you want to ensure that no more than 20% of the Pods can be unavailable at any time in a deployment with 5 Pods:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: my-pdb
+spec:
+  maxUnavailable: "20%"  # 20% of 5 Pods = 1 Pod can be unavailable
+  selector:
+    matchLabels:
+      app: my-app
+```
+
+- **maxUnavailable: "20%"**: In this case, Kubernetes will ensure that at most 20% of Pods (in this case, 1 Pod) can be unavailable during voluntary disruptions.
+
+#### **4. PDB for StatefulSet**
+
+You can also define a PDB for a **StatefulSet**. The process is the same as for a Deployment, but StatefulSets typically have Pods that need to maintain a unique identity, so ensuring availability is even more critical.
+
+For example, let’s say you have a StatefulSet with 3 Pods, and you want to ensure that at least 2 Pods are available at any time:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: statefulset-pdb
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: my-statefulset-app
+```
+
+- **minAvailable: 2**: Ensures that at least 2 Pods from the StatefulSet are always available during disruptions.
+
+### **5. PDB with Multiple Criteria**
+
+You can combine multiple criteria for both `minAvailable` and `maxUnavailable` if needed. For example, here’s a scenario where you want to ensure a minimum of 3 Pods are available, or at most 1 Pod can be unavailable:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: complex-pdb
+spec:
+  minAvailable: 3
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: my-complex-app
+```
+
+In this case, Kubernetes will ensure that at least 3 Pods are available, but if more than 3 are needed, no more than 1 Pod can be unavailable at any given time.
+
+---
+
+### **How PDB Works During Disruptions**
+
+1. **Rolling Update**: When a new version of your app is being deployed (via a rolling update), Kubernetes may terminate old Pods. The PDB ensures that the specified number of Pods (either by `minAvailable` or `maxUnavailable`) will remain running during the update.
+   
+2. **Node Drain**: If a node is drained (e.g., for maintenance), Kubernetes will evict Pods from that node. The PDB ensures that enough Pods remain running on other nodes, even if some are evicted during the drain.
+
+3. **Pod Deletion**: If Pods are manually deleted or evicted for other reasons, the PDB will prevent too many Pods from being unavailable.
+
+---
+
+### **Viewing and Managing PDBs**
+
+You can check the status of the PDB using the following command:
+
+```bash
+kubectl get poddisruptionbudget
+```
+
+To view more detailed information about a specific PDB:
+
+```bash
+kubectl describe poddisruptionbudget my-pdb
+```
+
+---
+
+### **Conclusion**
+
+- A **Pod Disruption Budget (PDB)** helps maintain the availability of your application during voluntary disruptions, such as rolling updates or node draining.
+- You can use either **minAvailable** (minimum Pods available) or **maxUnavailable** (maximum Pods that can be unavailable) to configure the PDB.
+- PDBs are critical for **high-availability applications** and ensure that critical workloads are not interrupted too much during maintenance or updates.
+
+By configuring PDBs appropriately, you can ensure that your applications remain highly available, even during disruptive operations like node draining or rolling updates.
+
+

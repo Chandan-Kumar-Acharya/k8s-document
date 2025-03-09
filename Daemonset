@@ -1,0 +1,149 @@
+
+In Kubernetes, a **DaemonSet** is a type of controller that ensures that a specific Pod runs on all or a selected subset of nodes in a Kubernetes cluster. A DaemonSet is typically used to deploy system-level or monitoring applications, like logging agents, monitoring agents (e.g., Prometheus), or network agents (e.g., Calico) that need to run on every node in the cluster.
+
+### **Use Case for DaemonSet:**
+- Running a **logging agent** on every node (e.g., Fluentd, Logstash).
+- Running **monitoring agents** like Prometheus node exporters on every node.
+- Running **network agents** like Calico or Weave.
+- Running **node-level utilities** or applications that need to be deployed to every node in the cluster.
+
+---
+
+### **How DaemonSet Works:**
+
+- When a DaemonSet is created, it ensures that the specified Pods are scheduled and run on all nodes in the cluster (or a selected subset based on node selectors, taints, and affinities).
+- If a new node is added to the cluster, the DaemonSet will ensure the Pods are scheduled on the new node.
+- If a node is removed, the Pods managed by the DaemonSet on that node are cleaned up.
+
+---
+
+### **Example of DaemonSet in Kubernetes:**
+
+Let’s walk through an example of creating a DaemonSet to deploy a simple **Fluentd** logging agent on every node in the cluster. This example assumes Fluentd as the container image, but it can be adapted for any other image.
+
+#### **DaemonSet YAML Example:**
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  labels:
+    app: fluentd
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      containers:
+        - name: fluentd
+          image: fluent/fluentd:v1.12-1  # Fluentd container image
+          volumeMounts:
+            - name: fluentd-config
+              mountPath: /fluentd/etc/fluentd.conf
+              subPath: fluentd.conf
+      volumes:
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config  # Name of the ConfigMap containing Fluentd configuration
+      nodeSelector:
+        kubernetes.io/os: linux  # Optional: Ensures that the Pods are scheduled on Linux nodes
+```
+
+### **Explanation of the YAML:**
+
+- `apiVersion: apps/v1`: Specifies that this is a DaemonSet resource.
+- `kind: DaemonSet`: Defines the resource type as a DaemonSet.
+- `metadata`: Contains the name and labels of the DaemonSet.
+  - `name`: The name of the DaemonSet (`fluentd`).
+  - `labels`: Labels used to identify the DaemonSet.
+- `spec`: The specification for the DaemonSet.
+  - `selector`: A label selector to identify the Pods managed by this DaemonSet. It must match the labels on the `template`.
+  - `template`: The Pod template that defines the Pods to be run on every node.
+    - `metadata`: Labels for the Pods.
+    - `spec`: The Pod specification.
+      - `containers`: Defines the container to run. In this case, we are using the `fluent/fluentd` image, but you can use any container image suitable for your application.
+      - `volumeMounts`: Mounts volumes into the container. In this case, the Fluentd configuration is mounted from a ConfigMap.
+      - `volumes`: Defines the volumes to be used by the Pods. The Fluentd configuration is taken from a `ConfigMap` named `fluentd-config`.
+      - `nodeSelector`: Ensures that the Pods are scheduled only on Linux nodes, which is optional and can be removed if not required.
+
+---
+
+### **Steps to Create and Use DaemonSet:**
+
+1. **Create the ConfigMap for Fluentd Configuration**:
+
+Before applying the DaemonSet, you need to create the necessary `ConfigMap` that contains the Fluentd configuration file.
+
+```bash
+kubectl create configmap fluentd-config --from-file=fluentd.conf=<path-to-fluentd-config-file>
+```
+
+2. **Apply the DaemonSet YAML**:
+
+After creating the ConfigMap, you can apply the DaemonSet YAML to deploy it to the Kubernetes cluster:
+
+```bash
+kubectl apply -f fluentd-daemonset.yaml
+```
+
+3. **Check the DaemonSet Status**:
+
+Once applied, you can check the status of the DaemonSet to see how many Pods are running:
+
+```bash
+kubectl get daemonset fluentd
+```
+
+This will show you how many Pods have been scheduled on each node.
+
+4. **Verify the Pods are Running**:
+
+You can check the Pods created by the DaemonSet by using the following command:
+
+```bash
+kubectl get pods -l app=fluentd
+```
+
+5. **Logs from the DaemonSet Pods**:
+
+To view the logs of one of the Pods managed by the DaemonSet:
+
+```bash
+kubectl logs <pod-name>
+```
+
+---
+
+### **Other DaemonSet Features:**
+
+- **Node Affinity**: You can use `nodeSelector`, `affinity`, or `taints` to control where the DaemonSet’s Pods are scheduled.
+- **Rolling Updates**: You can perform rolling updates on DaemonSets by updating the `image` in the DaemonSet specification. Kubernetes will ensure that Pods are updated in a rolling fashion.
+- **Taints and Tolerations**: Taints can be applied to nodes, and only Pods with matching tolerations will be scheduled onto those nodes.
+
+---
+
+### **Deleting a DaemonSet:**
+
+If you want to delete a DaemonSet, use the following command:
+
+```bash
+kubectl delete daemonset fluentd
+```
+
+This will remove the DaemonSet and clean up the Pods associated with it.
+
+---
+
+### **Summary of Key Points:**
+
+- **DaemonSet** ensures that a Pod runs on all nodes in a Kubernetes cluster or on a specific subset of nodes.
+- It is used for deploying system-level applications (e.g., logging agents, monitoring agents) that must run on every node.
+- DaemonSets automatically add Pods to newly added nodes and remove Pods from nodes that are removed from the cluster.
+- **Node selectors**, **taints**, and **affinities** can be used to control where the Pods run.
+
+This makes DaemonSet a powerful tool for ensuring that infrastructure-related services run on every node in your Kubernetes cluster.

@@ -1,0 +1,55 @@
+
+#!/bin/bash
+
+# Update the system
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Install required packages
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
+# Add Docker repository GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+# Add Kubernetes repository GPG key
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+# Add Kubernetes repository
+sudo apt-add-repository "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+
+# Install Docker
+sudo apt-get update && sudo apt-get install -y docker.io
+
+# Start Docker service
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Install Kubernetes tools (kubelet, kubeadm, kubectl)
+sudo apt-get update && sudo apt-get install -y kubelet kubeadm kubectl
+
+# Hold the Kubernetes package versions
+sudo apt-mark hold kubelet kubeadm kubectl
+
+# Disable swap (required for Kubernetes)
+sudo swapoff -a
+
+# Enable kubelet service
+sudo systemctl enable kubelet
+sudo systemctl start kubelet
+
+# Initialize Kubernetes master node (Modify CIDR if needed)
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+# Set up kubeconfig for kubectl access
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# Install Flannel CNI network plugin
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+# Allow master node to schedule pods (optional)
+kubectl taint nodes --all node-role.kubernetes.io/master-
+
+# Docker verification
+sudo docker --version
+
